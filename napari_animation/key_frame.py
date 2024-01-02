@@ -64,7 +64,7 @@ class KeyFrame:
     def __hash__(self) -> int:
         return id(self)
 
-    def __eq__(self, other):
+    def __eq__(self, other: KeyFrame) -> bool:
         if isinstance(other, KeyFrame):
             return (
                 self.__hash__() == other.__hash__()

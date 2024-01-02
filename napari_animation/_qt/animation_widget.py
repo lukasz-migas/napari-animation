@@ -8,6 +8,7 @@ from qtpy.QtWidgets import (
     QSlider,
     QVBoxLayout,
     QWidget,
+    QHBoxLayout
 )
 
 from ..animation import Animation
@@ -18,7 +19,7 @@ from .savedialog_widget import SaveDialogWidget
 
 
 class AnimationWidget(QWidget):
-    """Widget for interatviely making animations using the napari viewer.
+    """Widget for interactively making animations using the napari viewer.
 
     Parameters
     ----------
@@ -31,13 +32,19 @@ class AnimationWidget(QWidget):
         napari viewer.
     animation : napari_animation.Animation
         napari-animation animation in sync with the GUI.
+    save_dir : pathlib.Path
+        Default save directory for animations.
     """
+
+    save_dir: Path = Path.home()
 
     def __init__(self, viewer: Viewer, parent=None):
         super().__init__(parent=parent)
         # Store reference to viewer and create animation
         self.viewer = viewer
         self.animation = Animation(self.viewer)
+        # update console so that it can be used to display animation
+        self.viewer.update_console({"animation": self.animation})
 
         # Initialise User Interface
         self.keyframesListControlWidget = KeyFrameListControlWidget(
@@ -52,6 +59,14 @@ class AnimationWidget(QWidget):
         self.animationSlider = QSlider(Qt.Horizontal, parent=self)
         self.animationSlider.setToolTip("Scroll through animation")
         self.animationSlider.setRange(0, len(self.animation._frames) - 1)
+        self.animationSliderLabel = QLabel("", parent=self)
+        self.animationSliderLabel.setText(f"{self.animation._frames}")
+
+        progress_layout = QHBoxLayout()
+        progress_layout.setSpacing(2)
+        progress_layout.setContentsMargins(0, 0, 0, 0)
+        progress_layout.addWidget(self.animationSlider, stretch=True)
+        progress_layout.addWidget(self.animationSliderLabel)
 
         # Create layout
         self.setLayout(QVBoxLayout())
@@ -59,7 +74,7 @@ class AnimationWidget(QWidget):
         self.layout().addWidget(self.keyframesListWidget)
         self.layout().addWidget(self.frameWidget)
         self.layout().addWidget(self.saveButton)
-        self.layout().addWidget(self.animationSlider)
+        self.layout().addLayout(progress_layout)
 
         # establish key bindings and callbacks
         self._add_keybind_callbacks()
@@ -152,13 +167,13 @@ class AnimationWidget(QWidget):
                 self.animation.set_movie_frame_index(frame_index)
 
     def _save_callback(self, event=None):
-
         saveDialogWidget = SaveDialogWidget(self)
         animation_kwargs = saveDialogWidget.getAnimationParameters(
-            self, "Save animation", str(Path.home())
+            self, "Save animation", str(self.save_dir)
         )
 
         if animation_kwargs.get("filename", None) is not None:
+            self.save_dir = Path(animation_kwargs["filename"]).parent
             try:
                 self.animation.animate(**animation_kwargs)
             except ValueError as err:
@@ -167,11 +182,20 @@ class AnimationWidget(QWidget):
                 error_dialog.showMessage(str(err))
                 error_dialog.exec_()
 
+    def _save_state(self, event=None):
+        """Save state of the animation."""
+        pass
+
+    def _load_state(self, event=None):
+        """Load state of the animation."""
+        pass
+
     def _nframes_changed(self, event):
         has_frames = bool(event.value)
         self.animationSlider.setEnabled(has_frames)
         self.animationSlider.blockSignals(has_frames)
         self.animationSlider.setMaximum(event.value - 1 if has_frames else 0)
+        self.animationSliderLabel.setText(f"{event.value if has_frames else 0}")
 
     def closeEvent(self, ev) -> None:
         # release callbacks

@@ -1,7 +1,11 @@
+"""Animation object."""
+from __future__ import annotations
+
 import os
 from itertools import count
 from pathlib import Path
 from time import sleep
+from typing import TYPE_CHECKING
 
 import imageio
 import numpy as np
@@ -24,6 +28,9 @@ except ImportError:
             return "<0.4.15"
 
 
+if TYPE_CHECKING:
+    import napari
+
 napari_version = version("napari")
 
 
@@ -41,15 +48,14 @@ class Animation:
         List of key-frames in the animation.
     """
 
-    def __init__(self, viewer):
+    _current_frame: int | None = None
+
+    def __init__(self, viewer: napari.Viewer):
         self.viewer = viewer
 
         self.key_frames = KeyFrameList()
-
         self.key_frames.events.removed.connect(self._on_keyframe_removed)
-
         self.key_frames.events.changed.connect(self._on_keyframe_changed)
-
         self.key_frames.selection.events.active.connect(
             self._on_active_keyframe_changed
         )
@@ -61,8 +67,12 @@ class Animation:
         self._filename = None
 
     def capture_keyframe(
-        self, steps=15, ease=Easing.LINEAR, insert=True, position: int = None
-    ):
+        self,
+        steps: int = 15,
+        ease: Easing = Easing.LINEAR,
+        insert: bool = True,
+        position: int | None = None,
+    ) -> None:
         """Record current key-frame
 
         Parameters
@@ -74,10 +84,10 @@ class Animation:
             be used as an easing function for the transition between the last state
             and captured one.
         insert : bool
-            If captured key-frame should insert into current list or replace the current
+            If captured key-frame should insert into a current list or replace the current
             keyframe.
         position : int, optional
-            If provided, place new frame at this index. By default, inserts at current
+            If provided, place new frame at this index. By default, insert the current
             active frame.
         """
 
@@ -99,7 +109,7 @@ class Animation:
         else:
             self.key_frames[position] = new_frame
 
-    def set_to_keyframe(self, frame: int):
+    def set_to_keyframe(self, frame: int) -> None:
         """Set the viewer to a given key-frame
 
         Parameters
@@ -109,17 +119,18 @@ class Animation:
         """
         self.key_frames.selection.active = self.key_frames[frame]
 
-    def _validate_animation(self):
+    def _validate_animation(self) -> None:
         if len(self.key_frames) < 2:
             raise ValueError(
                 f"Must have at least 2 key frames, received {len(self.key_frames)}"
             )
 
-    def set_key_frame_index(self, index: int):
+    def set_key_frame_index(self, index: int) -> None:
+        """Set state to a specific key-frame."""
         frame_index = self._keyframe_frame_index(index)
         self.set_movie_frame_index(frame_index)
 
-    def set_movie_frame_index(self, index: int):
+    def set_movie_frame_index(self, index: int) -> None:
         """Set state to a specific frame in the final movie."""
         try:
             if index < 0:
@@ -133,19 +144,18 @@ class Animation:
 
             self._frames.set_movie_frame_index(self.viewer, index)
             self._current_frame = index
-
         except KeyError:
             return
 
     def animate(
         self,
-        filename,
-        fps=20,
-        quality=5,
-        format=None,
-        canvas_only=True,
-        scale_factor=None,
-    ):
+        filename: str,
+        fps: int = 20,
+        quality: float = 5,
+        format: str | None = None,
+        canvas_only: bool = True,
+        scale_factor: float | None = None,
+    ) -> None:
         """Create a movie based on key-frames
         Parameters
         -------
@@ -159,7 +169,7 @@ class Animation:
             number from 1 (lowest quality) to 9
             only applies to non-gif extensions
         format: str
-            The format to use to write the file. By default imageio selects the appropriate
+            The format to use to write the file. By default, imageio selects the appropriate
             for you based on the filename.
         canvas_only : bool
             If True include just includes the canvas, otherwise include the full napari
@@ -217,7 +227,7 @@ class Animation:
                 save_as_folder = True
 
         if save_as_folder:
-            # if movie is saved as series of PNG, create a folder
+            # if a movie is saved as series of PNG, create a folder
             if folder_path.is_dir():
                 for f in folder_path.glob("*.png"):
                     os.remove(f)
@@ -235,7 +245,7 @@ class Animation:
         sleep(0.05)
         with tqdm(total=n_frames) as pbar:
             for frame_index, image in enumerate(frame_generator):
-                if save_as_folder is True:
+                if save_as_folder:
                     frame_filename = (
                         folder_path / f"{file_path.stem}_{frame_index:06d}.png"
                     )
@@ -246,7 +256,7 @@ class Animation:
         if not save_as_folder:
             writer.close()
 
-    def _keyframe_frame_index(self, keyframe_index):
+    def _keyframe_frame_index(self, keyframe_index: int) -> int:
         """Gets the frame index of the keyframe corresponding to keyframe_index."""
         # Get all steps leading to keyframe.
         steps_to_keyframe = [
@@ -255,19 +265,19 @@ class Animation:
         frame_index = np.sum(steps_to_keyframe) if steps_to_keyframe else 0
         return int(frame_index)
 
-    def _on_keyframe_removed(self, event):
+    def _on_keyframe_removed(self, event) -> None:
         self.key_frames.selection.active = None
 
-    def _on_keyframe_changed(self, event):
+    def _on_keyframe_changed(self, event) -> None:
         self.key_frames.selection.active = event.value
 
-    def _on_active_keyframe_changed(self, event):
+    def _on_active_keyframe_changed(self, event) -> None:
         active_keyframe = event.value
         if active_keyframe:
             keyframe_index = self.key_frames.index(active_keyframe)
             self.set_key_frame_index(keyframe_index)
 
-    def _repr_html_(self):
+    def _repr_html_(self) -> str:
         if self._filename is None:
             html = 'Video animation not yet available (use the "animate" method to generate it).'
         elif str(self._filename).endswith(".gif"):

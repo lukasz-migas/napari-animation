@@ -1,10 +1,19 @@
+"""Qt widget for controlling a KeyFrameListWidget."""
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from qtpy.QtWidgets import QFrame, QHBoxLayout, QPushButton
+
+
+if TYPE_CHECKING:
+    from ..animation import Animation
 
 
 class KeyFrameListControlWidget(QFrame):
     """Controls for a KeyFrameListWidget"""
 
-    def __init__(self, animation, parent=None):
+    def __init__(self, animation: Animation, parent=None):
         super().__init__(parent=parent)
         self.animation = animation
 
@@ -13,12 +22,13 @@ class KeyFrameListControlWidget(QFrame):
         self.deleteButton = KeyFrameDeleteButton(self.animation)
         layout.addWidget(self.captureButton)
         layout.addWidget(self.deleteButton)
-
         self.setLayout(layout)
 
 
 class KeyFrameDeleteButton(QPushButton):
-    def __init__(self, animation):
+    """Delete selected key-frame."""
+
+    def __init__(self, animation: Animation):
         super().__init__()
 
         self.animation = animation
@@ -29,7 +39,9 @@ class KeyFrameDeleteButton(QPushButton):
 
 
 class KeyFrameCaptureButton(QPushButton):
-    def __init__(self, animation):
+    """Capture current viewer state as a key-frame."""
+
+    def __init__(self, animation: Animation):
         super().__init__()
 
         self.animation = animation

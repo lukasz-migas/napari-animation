@@ -1,3 +1,4 @@
+"""Sequence of rendered animation frames, based on keyframes."""
 from __future__ import annotations
 
 from collections import deque
@@ -145,7 +146,7 @@ class FrameSequence(Sequence[ViewerState]):
         self,
         viewer: napari.viewer.Viewer,
         canvas_only: bool = True,
-        scale_factor: float = None,
+        scale_factor: float | None = None,
     ) -> Iterator[np.ndarray]:
         """Iterate over interpolated viewer states, and yield rendered frames."""
         for i, state in enumerate(self):
@@ -162,11 +163,11 @@ class FrameSequence(Sequence[ViewerState]):
         self._current_index = index
 
     @property
-    def _current_index(self):
+    def _current_index(self) -> int:
         return self.__current_index
 
     @_current_index.setter
-    def _current_index(self, frame_index):
+    def _current_index(self, frame_index: int):
         if frame_index != self._keyframe_index:
             self.__current_index = frame_index
             self.events._current_index(value=frame_index)

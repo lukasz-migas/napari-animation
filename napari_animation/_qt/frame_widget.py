@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 class FrameWidget(QWidget):
-    """Widget for interatviely making animations using the napari viewer."""
+    """Widget for interactively making animations using the napari viewer."""
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -56,7 +56,7 @@ class FrameWidget(QWidget):
         if active_keyframe is None:
             return
         active_keyframe.steps = self.stepsSpinBox.value()
-        # TODO: if this changes programatically the slider will be out of sync.
+        # TODO: if this changes programmatically the slider will be out of sync.
         # but we don't currently have events on the keyframe.steps attribute.
         self.animation._frames._rebuild_keyframe_index()
 
@@ -65,5 +65,6 @@ class FrameWidget(QWidget):
         active_keyframe = self.animation.key_frames.selection.active
         active_keyframe.ease = self.get_easing_func()
 
-    def get_easing_func(self):
+    def get_easing_func(self) -> Easing:
+        """Get easing function from GUI state"""
         return Easing[self.easeComboBox.currentText().upper()]

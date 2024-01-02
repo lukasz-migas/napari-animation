@@ -11,17 +11,17 @@ class KeyFrameModel(QtListModel):
 
         see https://doc.qt.io/qt-5/model-view-programming.html#item-roles
         """
-        if role == Qt.EditRole:
-            return index.data(Qt.UserRole).name
-        if role == Qt.DecorationRole:  # thumbnail
-            key_frame = index.data(Qt.UserRole)
+        if role == Qt.ItemDataRole.EditRole:
+            return index.data(Qt.ItemDataRole.UserRole).name
+        if role == Qt.ItemDataRole.DecorationRole:  # thumbnail
+            key_frame = index.data(Qt.ItemDataRole.UserRole)
             return QImage(
                 key_frame.thumbnail,
                 key_frame.thumbnail.shape[1],
                 key_frame.thumbnail.shape[0],
                 QImage.Format_RGBA8888,
             )
-        if role == Qt.SizeHintRole:  # determines size of item
+        if role == Qt.ItemDataRole.SizeHintRole:  # determines size of item
             return QSize(160, 34)
         return super().data(index, role)
 

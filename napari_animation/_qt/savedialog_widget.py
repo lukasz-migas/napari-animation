@@ -1,3 +1,4 @@
+"""Customized QFileDialog for saving animations."""
 from pathlib import Path
 
 from qtpy.QtCore import Qt
@@ -42,8 +43,8 @@ class SaveDialogWidget(QFileDialog):
         self.setWindowTitle(caption)
         self.setDirectory(dir)
         self.setNameFilter(self._qt_file_name_filters)
-        self.setFileMode(QFileDialog.AnyFile)
-        self.setAcceptMode(QFileDialog.AcceptSave)
+        self.setFileMode(QFileDialog.FileMode.AnyFile)
+        self.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
 
         if options is not None:
             self.setOptions(options)
@@ -88,6 +89,8 @@ class SaveDialogWidget(QFileDialog):
 
 
 class OptionsWidget(QWidget):
+    """Options for saving animations."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -99,21 +102,23 @@ class OptionsWidget(QWidget):
         layout.addWidget(self.canvasCheckBox)
 
         # Quality list
-        self.qualitySlider = QLabeledSlider(Qt.Horizontal, self)
+        self.qualitySlider = QLabeledSlider(Qt.Orientation.Horizontal, self)
         self.qualitySlider.setRange(1, 10)
         self.qualitySlider.setValue(5)
 
         self.qualitySlider._slider.setMinimumWidth(70)
         self.qualitySlider._slider.setMaximumWidth(210)
 
-        self.qualitySlider._label.setAlignment(Qt.AlignCenter)
+        self.qualitySlider._label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.qualitySlider._label.setStyleSheet(
             "SliderLabel {background:transparent; border: 0; min-width: 20px; max-width: 20px;}"
             "SliderLabel::up-button, SliderLabel::down-button {subcontrol-origin: margin; width: 0px; height: 0px; }"
         )
 
         quality_label = QLabel("Quality", self)
-        quality_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        quality_label.setAlignment(
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+        )
         layout.addWidget(quality_label)
         layout.addWidget(self.qualitySlider)
 
@@ -122,7 +127,9 @@ class OptionsWidget(QWidget):
         self.fpsSpinBox.setRange(1, 100000)
         self.fpsSpinBox.setValue(20)
         fps_label = QLabel("FPS", self)
-        fps_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        fps_label.setAlignment(
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+        )
         layout.addWidget(fps_label)
         layout.addWidget(self.fpsSpinBox)
 
@@ -131,7 +138,9 @@ class OptionsWidget(QWidget):
         self.scaleSpinBox.setRange(0.001, 1000.0)
         self.scaleSpinBox.setValue(1.0)
         scale_label = QLabel("Scale factor", self)
-        scale_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        scale_label.setAlignment(
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+        )
         layout.addWidget(scale_label)
         layout.addWidget(self.scaleSpinBox)
 
